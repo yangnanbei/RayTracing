@@ -11,4 +11,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(rayTracing
     ./src/main.cpp
+    ./src/vec3.cpp
+)
+
+target_include_directories(rayTracing
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
