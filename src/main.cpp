@@ -16,11 +16,22 @@ inline float random_float() {
     return rand() / (RAND_MAX + 1.0f);
 }
 
-vec3 color(const ray& r, const hittable* world) {
+vec3 random_in_unit_sphere() {
+    vec3 p;
+    do {
+        p = 2.0f * vec3(random_float(), random_float(), random_float()) - vec3(1.0f, 1.0f, 1.0f);
+    } while (p.squared_length() >= 1.0f);
+    return p;
+}
+
+vec3 color(const ray& r, const hittable* world, int depth) {
     hit_record rec;
     if (world->hit(r, 0.001f, std::numeric_limits<float>::max(), rec)) {
-        // Visualize surface normal: map [-1,1] -> [0,1] for RGB
-        return 0.5f * vec3(rec.normal.x() + 1.0f, rec.normal.y() + 1.0f, rec.normal.z() + 1.0f);
+        if (depth >= 50) {
+            return vec3(0.0f, 0.0f, 0.0f);
+        }
+        vec3 target = rec.p + rec.normal + random_in_unit_sphere();
+        return 0.5f * color(ray(rec.p, target - rec.p), world, depth + 1);
     }
     vec3 unit_direction = unit_vector(r.direction());
     float t = 0.5f * (unit_direction.y() + 1.0f);
@@ -49,7 +60,7 @@ int main() {
                 float u = (float(i) + random_float()) / float(nx);
                 float v = (float(j) + random_float()) / float(ny);
                 ray r(origin, lower_left_corner + u * horizontal + v * vertical);
-                col += color(r, world);
+                col += color(r, world, 0);
             }
             col /= float(ns);
             int ir = int(255.99f * col[0]);
