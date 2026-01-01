@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cmath>
 #include "vec3.hpp"
 #include "ray.hpp"
 
@@ -6,9 +7,25 @@ inline vec3 unit_vector(const vec3& v) {
     return v / v.length();
 }
 
+float hit_sphere(const vec3& center, float radius, const ray& r) {
+    vec3 oc = r.origin() - center;
+    float a = dot(r.direction(), r.direction());
+    float b = 2.0f * dot(oc, r.direction());
+    float c = dot(oc, oc) - radius * radius;
+    float discriminant = b * b - 4 * a * c;
+    if (discriminant < 0.0f) {
+        return -1.0f;
+    }
+    return (-b - std::sqrt(discriminant)) / (2.0f * a);
+}
+
 vec3 color(const ray& r) {
+    float t = hit_sphere(vec3(0.0f, 0.0f, -1.0f), 0.5f, r);
+    if (t > 0.0f) {
+        return vec3(1.0f, 0.0f, 0.0f);
+    }
     vec3 unit_direction = unit_vector(r.direction());
-    float t = 0.5f * (unit_direction.y() + 1.0f);
+    t = 0.5f * (unit_direction.y() + 1.0f);
     return (1.0f - t) * vec3(1.0f, 1.0f, 1.0f) + t * vec3(0.5f, 0.7f, 1.0f);
 }
 
