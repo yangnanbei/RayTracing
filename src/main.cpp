@@ -1,37 +1,24 @@
 #include <iostream>
 #include <cmath>
 #include <limits>
-#include <cstdlib>
 #include "vec3.hpp"
 #include "ray.hpp"
 #include "hitable.hpp"
 #include "hitable_list.hpp"
 #include "sphere.hpp"
-
-inline vec3 unit_vector(const vec3& v) {
-    return v / v.length();
-}
-
-inline float random_float() {
-    return rand() / (RAND_MAX + 1.0f);
-}
-
-vec3 random_in_unit_sphere() {
-    vec3 p;
-    do {
-        p = 2.0f * vec3(random_float(), random_float(), random_float()) - vec3(1.0f, 1.0f, 1.0f);
-    } while (p.squared_length() >= 1.0f);
-    return p;
-}
+#include "material.hpp"
+#include "lambertian.hpp"
+#include "metal.hpp"
 
 vec3 color(const ray& r, const hittable* world, int depth) {
     hit_record rec;
     if (world->hit(r, 0.001f, std::numeric_limits<float>::max(), rec)) {
-        if (depth >= 50) {
-            return vec3(0.0f, 0.0f, 0.0f);
+        ray scattered;
+        vec3 attenuation;
+        if (depth < 50 && rec.mat_ptr->scatter(r, rec, attenuation, scattered)) {
+            return attenuation * color(scattered, world, depth + 1);
         }
-        vec3 target = rec.p + rec.normal + random_in_unit_sphere();
-        return 0.5f * color(ray(rec.p, target - rec.p), world, depth + 1);
+        return vec3(0.0f, 0.0f, 0.0f);
     }
     vec3 unit_direction = unit_vector(r.direction());
     float t = 0.5f * (unit_direction.y() + 1.0f);
@@ -43,11 +30,17 @@ int main() {
     int ny = 100;
     int ns = 100; // samples per pixel for anti-aliasing
     std::cout << "P3\n" << nx <<" " << ny << "\n255\n";
-    // Scene: small sphere in front and large ground sphere
-    hittable* list[2];
-    list[0] = new sphere(vec3(0.0f, 0.0f, -1.0f), 0.5f);
-    list[1] = new sphere(vec3(0.0f, -100.5f, -1.0f), 100.0f);
-    hittable* world = new hittable_list(list, 2);
+    // Scene: matte center sphere, matte ground, metal spheres on left/right
+    material* mat_center = new lambertian(vec3(0.1f, 0.2f, 0.5f));
+    material* mat_ground = new lambertian(vec3(0.8f, 0.8f, 0.0f));
+    material* mat_metal_left = new metal(vec3(0.8f, 0.8f, 0.8f), 0.0f);
+    material* mat_metal_right = new metal(vec3(0.8f, 0.6f, 0.2f), 0.3f);
+    hittable* list[4];
+    list[0] = new sphere(vec3(0.0f, 0.0f, -1.0f), 0.5f, mat_center);
+    list[1] = new sphere(vec3(0.0f, -100.5f, -1.0f), 100.0f, mat_ground);
+    list[2] = new sphere(vec3(-1.0f, 0.0f, -1.0f), 0.5f, mat_metal_left);
+    list[3] = new sphere(vec3(1.0f, 0.0f, -1.0f), 0.5f, mat_metal_right);
+    hittable* world = new hittable_list(list, 4);
 
     vec3 lower_left_corner(-2.0f, -1.0f, -1.0f);
     vec3 horizontal(4.0f, 0.0f, 0.0f);
@@ -72,5 +65,11 @@ int main() {
 
     delete list[0];
     delete list[1];
+    delete list[2];
+    delete list[3];
     delete world;
+    delete mat_center;
+    delete mat_ground;
+    delete mat_metal_left;
+    delete mat_metal_right;
 }

@@ -6,7 +6,7 @@
 class sphere : public hittable {
 public:
     sphere() = default;
-    sphere(const vec3& cen, float r) : center(cen), radius(r) {}
+    sphere(const vec3& cen, float r, material* m) : center(cen), radius(r), mat_ptr(m) {}
 
     bool hit(const ray& r, float t_min, float t_max, hit_record& rec) const override {
         vec3 oc = r.origin() - center;
@@ -20,6 +20,7 @@ public:
                 rec.t = temp;
                 rec.p = r.point_at_parameter(rec.t);
                 rec.normal = (rec.p - center) / radius;
+                rec.mat_ptr = mat_ptr;
                 return true;
             }
             temp = (-b + std::sqrt(discriminant)) / a;
@@ -27,6 +28,7 @@ public:
                 rec.t = temp;
                 rec.p = r.point_at_parameter(rec.t);
                 rec.normal = (rec.p - center) / radius;
+                rec.mat_ptr = mat_ptr;
                 return true;
             }
         }
@@ -35,4 +37,5 @@ public:
 
     vec3 center;
     float radius = 0.0f;
+    material* mat_ptr = nullptr;
 };
