@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <limits>
+#include <cstdlib>
 #include "vec3.hpp"
 #include "ray.hpp"
 #include "hitable.hpp"
@@ -9,6 +10,10 @@
 
 inline vec3 unit_vector(const vec3& v) {
     return v / v.length();
+}
+
+inline float random_float() {
+    return rand() / (RAND_MAX + 1.0f);
 }
 
 vec3 color(const ray& r, const hittable* world) {
@@ -25,6 +30,7 @@ vec3 color(const ray& r, const hittable* world) {
 int main() {
     int nx = 200;
     int ny = 100;
+    int ns = 100; // samples per pixel for anti-aliasing
     std::cout << "P3\n" << nx <<" " << ny << "\n255\n";
     // Scene: small sphere in front and large ground sphere
     hittable* list[2];
@@ -38,10 +44,14 @@ int main() {
     vec3 origin(0.0f, 0.0f, 0.0f);
     for (int j = ny - 1; j >= 0; j--) {
         for (int i = 0; i < nx; i++) {
-            float u = float(i) / float(nx);
-            float v = float(j) / float(ny);
-            ray r(origin, lower_left_corner + u * horizontal + v * vertical);
-            vec3 col = color(r, world);
+            vec3 col(0.0f, 0.0f, 0.0f);
+            for (int s = 0; s < ns; s++) {
+                float u = (float(i) + random_float()) / float(nx);
+                float v = (float(j) + random_float()) / float(ny);
+                ray r(origin, lower_left_corner + u * horizontal + v * vertical);
+                col += color(r, world);
+            }
+            col /= float(ns);
             int ir = int(255.99f * col[0]);
             int ig = int(255.99f * col[1]);
             int ib = int(255.99f * col[2]);
