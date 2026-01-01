@@ -1,4 +1,3 @@
-## chapter 1
 Our target is get a output image and display it, after get a rayTracing we need to trans it into a ppm file.
 ./rayTracing > image.ppm
 
@@ -17,3 +16,5 @@ only this kind of file can display it.
 ```
 display image.ppm
 ```
+
+We can use ./run.sh to test the result.
